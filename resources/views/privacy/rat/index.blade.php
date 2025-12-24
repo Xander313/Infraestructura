@@ -4,6 +4,8 @@
 @section('active_key', 'rat')
 
 @section('page_header')
+
+
 <div class="flex justify-between items-center">
     <div>
         <h2 class="text-xl font-bold">Actividades de Tratamiento</h2>
@@ -11,7 +13,7 @@
     </div>
     <a href="{{ route('rat.create') }}"
         class="bg-blue-600 text-white px-4 py-2 rounded">
-        Nuevo Eeee
+        Nuevo
     </a>
 </div>
 @endsection

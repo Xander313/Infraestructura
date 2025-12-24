@@ -26,7 +26,7 @@ class ProcessingActivity extends Model
             'data_cat_id'
         )->withPivot('collection_source');
     }
-/*
+ 
     // 1:N Retención
     public function retentionRules()
     {
@@ -37,5 +37,5 @@ class ProcessingActivity extends Model
     public function transfers()
     {
         return $this->hasMany(Transfer::class, 'pa_id');
-    }*/
+    } 
 }

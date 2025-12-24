@@ -95,6 +95,7 @@
     ['label' => 'Sistemas / Data Stores', 'href' => '#', 'key' => 'systems'],
     ['label' => 'Destinatarios', 'href' => '#', 'key' => 'recipients'],
     ['label' => 'RAT: Actividades de Tratamiento', 'href' => route('rat.index'), 'key' => 'rat'],
+
     ['label' => 'Titulares / Consentimientos', 'href' => '#', 'key' => 'subjects'],
     ['label' => 'Documentos', 'href' => '#', 'key' => 'documents'],
     ['label' => 'DSAR', 'href' => '#', 'key' => 'dsar'],
@@ -252,6 +253,8 @@
 
                     <div class="space-y-1">
                         @foreach($section['items'] as $item)
+
+                        <!-- SE REALIZA ESTE CAMBIO PARA ASI PODER REDIRIJER A LAS VISTAS CORRESPONDIENTES
                         <a
                             href="{{ $item['href'] }}"
                             @click="if (isMobile()) sidebarOpen = false"
@@ -267,7 +270,22 @@
                             <svg x-show="activeKey === '{{ $item['key'] }}'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                             </svg>
+                        </a>-->
+                        <a href="{{ $item['href'] }}"
+                            @click="if (isMobile()) sidebarOpen = false"
+                            class="flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors
+          hover:bg-gray-50 text-gray-700"
+                            :class="activeKey === '{{ $item['key'] }}' ? 'bg-blue-50 text-blue-700 border border-blue-100' : ''"
+                            @mouseenter="hoverKey='{{ $item['key'] }}'"
+                            @mouseleave="hoverKey=null"
+                            @focus="hoverKey='{{ $item['key'] }}'"
+                            @blur="hoverKey=null">
+                            <span class="truncate">{{ $item['label'] }}</span>
+                            <svg x-show="activeKey === '{{ $item['key'] }}'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
                         </a>
+
                         @endforeach
                     </div>
                 </div>

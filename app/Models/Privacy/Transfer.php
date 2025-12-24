@@ -18,4 +18,8 @@ class Transfer extends Model
         'safeguard',
         'legal_basis_text',
     ];
+    public function activity()
+    {
+        return $this->belongsTo(ProcessingActivity::class, 'pa_id');
+    }
 }

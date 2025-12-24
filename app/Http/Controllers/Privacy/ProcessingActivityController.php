@@ -8,6 +8,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Privacy\ProcessingActivity;
 use App\Models\Privacy\DataCategory;
+use App\Models\Privacy\Recipient;
+use App\Models\Privacy\Country;
+use Illuminate\Support\Facades\DB;
 
 
 class ProcessingActivityController extends Controller
@@ -19,6 +22,7 @@ class ProcessingActivityController extends Controller
     {
         $activities = ProcessingActivity::orderBy('pa_id', 'desc')->get();
 
+        //dd($activities);
         return view('privacy.rat.index', compact('activities'));
     }
 
@@ -27,9 +31,13 @@ class ProcessingActivityController extends Controller
      */
     public function create()
     {
-        $categories = DataCategory::orderBy('name')->get();
 
-        return view('privacy.rat.create', compact('categories'));
+
+        $categories = DataCategory::all();
+        $recipients = Recipient::all();
+        $countries = Country::all();
+
+        return view('privacy.rat.create', compact('categories', 'recipients', 'countries'));
     }
 
     /**
@@ -37,7 +45,58 @@ class ProcessingActivityController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        DB::transaction(function () use ($request) {
+
+   
+            $activity = ProcessingActivity::create([
+                /*'org_id' => 1, aqui se espera el id de la session de org se coloca un 1 para poder insertar TEMPORALMENTE*/
+                'org_id' => 1,
+                /*'owner_unit_id' => auth()->user()->unit_id,----aqui se espera el id de la session del user actual se coloca un 1 para poder insertar TEMPORALMENTE*/
+                'owner_unit_id' => 1,
+                'name' => $request->name
+            ]);
+
+
+            if ($request->has('data_categories')) {
+                foreach ($request->data_categories as $cat_id) {
+                    DB::table('privacy.pa_data_category')->insert([
+                        'pa_id' => $activity->pa_id,
+                        'data_cat_id' => $cat_id,
+                        'collection_source' => null 
+                    ]);
+                }
+            }
+
+
+            if ($request->has('retention_rules')) {
+                foreach ($request->retention_rules as $rule) {
+                    DB::table('privacy.retention_rule')->insert([
+                        'pa_id' => $activity->pa_id,
+                        'retention_period_days' => $rule['retention_period_days'] ?? null,
+                        'trigger_event' => $rule['trigger_event'] ?? null,
+                        'disposal_method' => $rule['disposal_method'] ?? null,
+                        'legal_hold_flag' => false
+                    ]);
+                }
+            }
+
+   
+            if ($request->has('transfers')) {
+                foreach ($request->transfers as $transfer) {
+                    DB::table('privacy.transfer')->insert([
+                        'pa_id' => $activity->pa_id,
+                        'recipient_id' => $transfer['recipient_id'] ?? null,
+                        'country_id' => $transfer['country_id'] ?? null,
+                        'transfer_type' => $transfer['transfer_type'] ?? 'N/A',
+                        'safeguard' => $transfer['safeguard'] ?? null,
+                        'legal_basis_text' => $transfer['legal_basis_text'] ?? null,
+                        'created_at' => now()
+                    ]);
+                }
+            }
+        });
+
+        return redirect()->route('rat.index')->with('success', 'Actividad creada correctamente');
     }
 
     /**

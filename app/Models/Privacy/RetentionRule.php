@@ -17,4 +17,8 @@ class RetentionRule extends Model
         'disposal_method',
         'legal_hold_flag',
     ];
+    public function activity()
+    {
+        return $this->belongsTo(ProcessingActivity::class, 'pa_id');
+    }
 }
