@@ -119,25 +119,28 @@ class ProcessingActivityController extends Controller
      */
     public function edit(string $id)
     {
-        // Obtener actividad
-        $activity = ProcessingActivity::findOrFail($id);
+        // Obtener actividad con categorías cargadas
+        $activity = ProcessingActivity::with('categories')->findOrFail($id);
 
         // Obtener datos para los selects / checkboxes
         $categories = DataCategory::all();
         $recipients = Recipient::all();
         $countries = Country::all();
 
-        // Obtener categorías seleccionadas
-        $selectedCategories = $activity->categories()->pluck('data_cat_id')->toArray();
+        // Obtener categorías seleccionadas y su collection_source desde el pivot
+        $selectedCategories = $activity->categories->pluck('data_cat_id')->toArray();
+        $categoryPivot = $activity->categories->pluck('pivot.collection_source', 'data_cat_id')->toArray();
 
         return view('privacy.rat.edit', compact(
             'activity',
             'categories',
             'recipients',
             'countries',
-            'selectedCategories'
+            'selectedCategories',
+            'categoryPivot'
         ));
     }
+
 
 
     /**
