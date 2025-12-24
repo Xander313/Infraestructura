@@ -16,16 +16,7 @@ class ProcessingActivity extends Model
         'name',
     ];
 
-    // N:M con categorías de datos
-    public function dataCategories()
-    {
-        return $this->belongsToMany(
-            DataCategory::class,
-            'privacy.pa_data_category',
-            'pa_id',
-            'data_cat_id'
-        )->withPivot('collection_source');
-    }
+    
  
     // 1:N Retención
     public function retentionRules()
@@ -37,5 +28,30 @@ class ProcessingActivity extends Model
     public function transfers()
     {
         return $this->hasMany(Transfer::class, 'pa_id');
-    } 
+    }
+
+
+    // Relación N:M con DataCategory
+    public function categories()
+    {
+        return $this->belongsToMany(
+            DataCategory::class,     // Modelo relacionado
+            'privacy.pa_data_category', // Tabla pivote
+            'pa_id',                // FK de esta tabla en pivote
+            'data_cat_id'           // FK del modelo relacionado en pivote
+        )->withPivot('collection_source'); // si quieres usar collection_source
+    }
+
+    // Relación RetentionRule
+    /*
+    public function retentionRules()
+    {
+        return $this->hasMany(RetentionRule::class, 'pa_id', 'pa_id');
+    }
+
+    // Relación Transfer
+    public function transfers()
+    {
+        return $this->hasMany(Transfer::class, 'pa_id', 'pa_id');
+    }*/
 }

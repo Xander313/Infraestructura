@@ -21,4 +21,9 @@ class RetentionRule extends Model
     {
         return $this->belongsTo(ProcessingActivity::class, 'pa_id');
     }
+
+    public function retentionRules()
+    {
+        return $this->hasMany(RetentionRule::class, 'pa_id');
+    }
 }

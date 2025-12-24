@@ -30,11 +30,15 @@
             {{-- Categorías --}}
             <div x-show="tab==='categories'">
                 @foreach($categories as $cat)
-                <label class="block">
-                    <input type="checkbox" name="data_categories[]" value="{{ $cat->data_cat_id }}">
-                    {{ $cat->name }}
-                </label>
+                <div class="mb-2 border p-2 rounded">
+                    <label>
+                        <input type="checkbox" name="data_categories[{{ $cat->data_cat_id }}][checked]" value="1">
+                        {{ $cat->name }}
+                    </label>
+                    <input type="text" name="data_categories[{{ $cat->data_cat_id }}][collection_source]" placeholder="Fuente de colección" class="border p-1 ml-2">
+                </div>
                 @endforeach
+
             </div>
 
             {{-- Retención --}}
@@ -43,6 +47,8 @@
                 <div>
                     <input type="number" name="retention_rules[0][retention_period_days]" placeholder="Días">
                     <input type="text" name="retention_rules[0][trigger_event]" placeholder="Evento">
+                    <input type="text" name="retention_rules[0][disposal_method]" placeholder="Método de disposición">
+                    <label><input type="checkbox" name="retention_rules[0][legal_hold_flag]" value="1"> Retencion legal</label>
                 </div>
             </div>
 
@@ -50,13 +56,6 @@
             <div x-show="tab==='transfers'">
                 <label class="block text-sm font-medium">Transferencias (ejemplo)</label>
                 <div>
-                    <!--
-                    <select name="transfers[0][recipient_id]">
-                        <option value="1">Proveedor 1</option>
-                    </select>
-                    <select name="transfers[0][country_id]">
-                        <option value="1">País 1</option>
-                    </select>-->
 
                     <select name="transfers[0][recipient_id]" class="border p-2 rounded">
                         @foreach($recipients as $recipient)
@@ -69,6 +68,10 @@
                         <option value="{{ $country->country_id }}">{{ $country->name }}</option>
                         @endforeach
                     </select>
+
+                    <input type="text" name="transfers[0][transfer_type]" placeholder="Tipo de transferencia">
+                    <input type="text" name="transfers[0][safeguard]" placeholder="Salvaguarda">
+                    <input type="text" name="transfers[0][legal_basis_text]" placeholder="Base legal">
 
                 </div>
             </div>

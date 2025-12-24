@@ -22,4 +22,10 @@ class Transfer extends Model
     {
         return $this->belongsTo(ProcessingActivity::class, 'pa_id');
     }
+
+
+    public function transfers()
+    {
+        return $this->hasMany(Transfer::class, 'pa_id');
+    }
 }
