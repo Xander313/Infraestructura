@@ -1,0 +1,48 @@
+# =========================
+# Laravel / PHP
+# =========================
+/vendor/
+/node_modules/
+
+# Archivos de entorno
+.env
+.env.*
+
+# Logs
+/storage/logs/
+/storage/*.key
+
+# Cache / compiled
+/bootstrap/cache/*
+!/bootstrap/cache/.gitignore
+
+# Storage generado
+/storage/app/*
+!/storage/app/public
+
+/public/storage
+
+# =========================
+# IDEs / Editores
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =========================
+# OS
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# Testing
+# =========================
+.phpunit.result.cache
+
+# =========================
+# Frontend
+# =========================
+/public/hot
+/public/build

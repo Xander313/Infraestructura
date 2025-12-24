@@ -3,6 +3,7 @@
 @section('title', 'RAT - Actividades de Tratamiento')
 @section('h1', 'Actividades de Tratamiento')
 @section('subtitle', 'Registro de Actividades de Tratamiento (RAT)')
+
 @section('active_key', 'rat')
 
 @section('content')
