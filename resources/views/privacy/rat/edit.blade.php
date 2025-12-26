@@ -180,12 +180,13 @@
                 <button type="button"
                         onclick="history.back()"
                         class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded">
+                        <i class="fa-solid fa-arrow-left"></i> &nbsp;
                     Regresar
                 </button>
 
                 <button type="submit"
                         class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
-                    Guardar
+                    Guardar &nbsp; <i class="fa-solid fa-save"></i>
                 </button>
             </div>
 
@@ -196,6 +197,9 @@
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
 
 
 <script>

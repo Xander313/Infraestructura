@@ -103,7 +103,7 @@ class ProcessingActivityController extends Controller
             }
         });
 
-        return redirect()->route('rat.index')->with('success', 'Actividad creada correctamente');
+        return redirect()->route('rat.index')->with('exito', 'Actividad creada correctamente');
     }
 
     /**
@@ -137,7 +137,7 @@ class ProcessingActivityController extends Controller
             ->pluck('pivot.collection_source', 'data_cat_id')
             ->toArray();
 
-        // 👇 ESTO ES LO QUE FALTABA
+        // ESTO ES LO QUE FALTABA
         $retention = $activity->retentionRules->first();
         $transfer  = $activity->transfers->first();
 
@@ -191,7 +191,7 @@ class ProcessingActivityController extends Controller
                 }
             }
 
-            // 🔥 AQUÍ ESTÁ LA CLAVE
+            // AQUÍ ESTÁ LA CLAVE
             $activity->categories()->sync($syncData);
 
             // ================================
@@ -214,7 +214,7 @@ class ProcessingActivityController extends Controller
 
         return redirect()
             ->route('rat.index')
-            ->with('success', 'Processing Activity actualizada correctamente');
+            ->with('exito', 'Processing Activity actualizada correctamente');
     }
 
     /**
@@ -224,16 +224,28 @@ class ProcessingActivityController extends Controller
     {
         $activity = ProcessingActivity::findOrFail($id);
 
-        DB::transaction(function () use ($activity) {
-            // Eliminar subrecursos (relaciones)
-         //  $activity->categories()->detach(); SE ESPERA EL MODEO CATEGORIES PARA REFERCIAR Y ELIMINAR
-            $activity->retentionRules()->delete();
-            $activity->transfers()->delete();
+        // Relaciones críticas
+        $tieneRelacionesCriticas =
+            $activity->retentionRules()->exists() ||
+            $activity->transfers()->exists();
 
-            // Eliminar actividad
+        if ($tieneRelacionesCriticas) {
+            return redirect()
+                ->route('rat.index')
+                ->with('erro', 'No se puede eliminar la actividad porque tiene relaciones críticas.');
+        }
+
+        DB::transaction(function () use ($activity) {
+
+            //Limpiar pivotes
+            $activity->categories()->detach();
+
+            //Eliminar actividad
             $activity->delete();
         });
 
-        return redirect()->route('rat.index')->with('success', 'Actividad eliminada correctamente.');
+        return redirect()
+            ->route('rat.index')
+            ->with('exito', 'Actividad eliminada correctamente.');
     }
 }
