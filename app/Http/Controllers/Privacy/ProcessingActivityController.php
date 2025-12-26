@@ -119,17 +119,27 @@ class ProcessingActivityController extends Controller
      */
     public function edit(string $id)
     {
-        // Obtener actividad con categorías cargadas
-        $activity = ProcessingActivity::with('categories')->findOrFail($id);
+        // Cargar actividad con relaciones
+        $activity = ProcessingActivity::with([
+            'categories',
+            'retentionRules',
+            'transfers'
+        ])->findOrFail($id);
 
-        // Obtener datos para los selects / checkboxes
+        // Datos auxiliares
         $categories = DataCategory::all();
         $recipients = Recipient::all();
-        $countries = Country::all();
+        $countries  = Country::all();
 
-        // Obtener categorías seleccionadas y su collection_source desde el pivot
+        // Categorías seleccionadas + pivot
         $selectedCategories = $activity->categories->pluck('data_cat_id')->toArray();
-        $categoryPivot = $activity->categories->pluck('pivot.collection_source', 'data_cat_id')->toArray();
+        $categoryPivot = $activity->categories
+            ->pluck('pivot.collection_source', 'data_cat_id')
+            ->toArray();
+
+        // 👇 ESTO ES LO QUE FALTABA
+        $retention = $activity->retentionRules->first();
+        $transfer  = $activity->transfers->first();
 
         return view('privacy.rat.edit', compact(
             'activity',
@@ -137,37 +147,58 @@ class ProcessingActivityController extends Controller
             'recipients',
             'countries',
             'selectedCategories',
-            'categoryPivot'
+            'categoryPivot',
+            'retention',
+            'transfer'
         ));
     }
-
 
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'data_categories' => 'required|array',
-            'retention_rules' => 'required|array',
-            'transfers' => 'required|array',
-        ]);
+        $activity = ProcessingActivity::findOrFail($id);
 
-        DB::transaction(function () use ($request, $id) {
-            $activity = ProcessingActivity::findOrFail($id);
+        DB::transaction(function () use ($request, $activity) {
+
+            // ================================
+            // 1. ACTUALIZAR ACTIVIDAD
+            // ================================
             $activity->update([
                 'name' => $request->name,
-                'org_id' => 1, // Ajusta según tu contexto
-                'owner_unit_id' => 1, // Ajusta según tu contexto
+                'description' => $request->description,
+                'legal_basis' => $request->legal_basis,
+                'org_id' => 1,          // Ajusta si aplica
+                'owner_unit_id' => 1,   // Ajusta si aplica
             ]);
 
-            // Actualizar categorías
-            $activity->categories()->sync($request->data_categories);
+            // ================================
+            // 2. ACTUALIZAR CATEGORÍAS (FIX)
+            // ================================
+            $syncData = [];
 
-            // Actualizar Retention Rules
+            if ($request->has('data_categories')) {
+                foreach ($request->data_categories as $catId => $data) {
+
+                    // Solo sincroniza las que estén marcadas
+                    if (isset($data['checked'])) {
+                        $syncData[$catId] = [
+                            'collection_source' => $data['collection_source'] ?? 'N/A'
+                        ];
+                    }
+                }
+            }
+
+            // 🔥 AQUÍ ESTÁ LA CLAVE
+            $activity->categories()->sync($syncData);
+
+            // ================================
+            // 3. ACTUALIZAR RETENTION RULES
+            // ================================
             if ($request->has('retention_rules')) {
+
                 // Borrar existentes
                 $activity->retentionRules()->delete();
 
@@ -176,30 +207,15 @@ class ProcessingActivityController extends Controller
                         'retention_period_days' => $rule['retention_period_days'] ?? null,
                         'trigger_event' => $rule['trigger_event'] ?? null,
                         'disposal_method' => $rule['disposal_method'] ?? null,
-                        'legal_hold_flag' => $rule['legal_hold_flag'] ?? false,
-                    ]);
-                }
-            }
-
-            // Actualizar Transferencias
-            if ($request->has('transfers')) {
-                $activity->transfers()->delete();
-
-                foreach ($request->transfers as $t) {
-                    $activity->transfers()->create([
-                        'recipient_id' => $t['recipient_id'] ?? null,
-                        'country_id' => $t['country_id'] ?? null,
-                        'transfer_type' => $t['transfer_type'] ?? 'N/A',
-                        'safeguard' => $t['safeguard'] ?? 'N/A',
-                        'legal_basis_text' => $t['legal_basis_text'] ?? 'N/A',
                     ]);
                 }
             }
         });
 
-        return redirect()->route('rat.index')->with('success', 'Actividad actualizada correctamente.');
+        return redirect()
+            ->route('rat.index')
+            ->with('success', 'Processing Activity actualizada correctamente');
     }
-
 
     /**
      * Remove the specified resource from storage.
