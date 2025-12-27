@@ -4,9 +4,6 @@
 /vendor/
 /node_modules/
 
-# Archivos de entorno
-.env
-.env.*
 
 # Logs
 /storage/logs/
