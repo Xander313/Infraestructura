@@ -15,3 +15,6 @@ Route::get('/api/dashboard/alerts', [DashboardController::class, 'apiAlerts'])->
 Route::get('/api/dashboard/activity', [DashboardController::class, 'apiRecentActivity'])->name('dashboard.api.activity');
 
 Route::resource('rat', ProcessingActivityController::class);
+
+
+require __DIR__.'/risk.php';
