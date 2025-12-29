@@ -15,6 +15,11 @@ class AppUser extends Model
         'email',
         'full_name',
         'status',
+        'last_login_at',
         'created_at',
+    ];
+    protected $casts = [
+        'last_login_at' => 'datetime',
+        'created_at' => 'datetime'
     ];
 }
