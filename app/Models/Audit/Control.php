@@ -14,7 +14,9 @@ class Control extends Model
 
     protected $fillable = [
         'org_id',
+        'code',
         'name',
+        'control_type',
         'description',
         'owner_user_id',
         'status'

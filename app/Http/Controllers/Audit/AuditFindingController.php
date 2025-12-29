@@ -12,14 +12,21 @@ class AuditFindingController extends Controller
 {
     public function index()
     {
-        $findings = AuditFinding::with('audit', 'control')->orderBy('severity')->get();
+        $findings = AuditFinding::whereHas('audit', function ($q) {
+                $q->where('org_id', session('org_id'));
+            })
+            ->with('audit', 'control')
+            ->orderBy('severity')
+            ->get();
+
         return view('audit.findings.index', compact('findings'));
     }
 
     public function create()
     {
-        $audits = Audit::all();
-        $controls = Control::all();
+        $audits = Audit::where('org_id', session('org_id'))->get();
+        $controls = Control::where('org_id', session('org_id'))->get();
+
         return view('audit.findings.create', compact('audits', 'controls'));
     }
 
@@ -30,10 +37,26 @@ class AuditFindingController extends Controller
             'control_id' => ['nullable', 'exists:' . Control::class . ',control_id'],
             'severity' => 'required|string|max:50',
             'description' => 'nullable|string',
-            'status' => 'required|string|max:50'
+            'status' => 'required|string|max:50',
         ]);
 
-        AuditFinding::create($request->all());
+        $audit = Audit::where('audit_id', $request->audit_id)
+            ->where('org_id', session('org_id'))
+            ->firstOrFail();
+
+        if ($request->control_id) {
+            Control::where('control_id', $request->control_id)
+                ->where('org_id', session('org_id'))
+                ->firstOrFail();
+        }
+
+        AuditFinding::create([
+            'audit_id' => $audit->audit_id,
+            'control_id' => $request->control_id,
+            'severity' => $request->severity,
+            'description' => $request->description,
+            'status' => $request->status,
+        ]);
 
         return redirect()->route('findings.index')
             ->with('success', 'Hallazgo creado correctamente.');
@@ -41,37 +64,50 @@ class AuditFindingController extends Controller
 
     public function show(AuditFinding $finding)
     {
+        $this->authorizeFinding($finding);
+
         $finding->load('audit', 'control', 'correctiveActions.owner');
+
         return view('audit.findings.show', compact('finding'));
     }
 
     public function edit(AuditFinding $finding)
     {
-        $audits = Audit::all();
-        $controls = Control::all();
+        $this->authorizeFinding($finding);
+
+        $audits = Audit::where('org_id', session('org_id'))->get();
+        $controls = Control::where('org_id', session('org_id'))->get();
+
         return view('audit.findings.create', compact('finding', 'audits', 'controls'));
     }
 
     public function update(Request $request, AuditFinding $finding)
     {
+        $this->authorizeFinding($finding);
+
         $request->validate([
-            'audit_id' => ['required', 'exists:' . Audit::class . ',audit_id'],
-            'control_id' => ['nullable', 'exists:' . Control::class . ',control_id'],
             'severity' => 'required|string|max:50',
             'description' => 'nullable|string',
-            'status' => 'required|string|max:50'
+            'status' => 'required|string|max:50',
         ]);
 
-        $finding->update($request->all());
+        $finding->update($request->only([
+            'severity',
+            'description',
+            'status',
+        ]));
 
         return redirect()->route('findings.index')
             ->with('success', 'Hallazgo actualizado correctamente.');
     }
 
-    public function destroy(AuditFinding $finding)
+    /**
+     * Validación de pertenencia a la organización activa
+     */
+    private function authorizeFinding(AuditFinding $finding)
     {
-        $finding->delete();
-        return redirect()->route('findings.index')
-            ->with('success', 'Hallazgo eliminado correctamente.');
+        if ($finding->audit->org_id !== session('org_id')) {
+            abort(403, 'Acceso no autorizado a este hallazgo');
+        }
     }
 }

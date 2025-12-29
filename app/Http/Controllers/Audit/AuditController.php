@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Audit;
 
 use App\Http\Controllers\Controller;
 use App\Models\Audit\Audit;
-use App\Models\Core\Org;
 use App\Models\IAM\AppUser;
 use Illuminate\Http\Request;
 
@@ -12,30 +11,39 @@ class AuditController extends Controller
 {
     public function index()
     {
-        $audits = Audit::with('org', 'auditor')->orderBy('planned_at')->get();
+        $audits = Audit::where('org_id', session('org_id'))
+            ->with('auditor')
+            ->orderBy('planned_at')
+            ->get();
+
         return view('audit.audits.index', compact('audits'));
     }
 
     public function create()
     {
-        $orgs = Org::all();
         $users = AppUser::all();
-        return view('audit.audits.create', compact('orgs', 'users'));
+
+        return view('audit.audits.create', compact('users'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'org_id' => ['required', 'exists:' . Org::class . ',org_id'],
             'audit_type' => 'required|string|max:255',
             'scope' => 'nullable|string',
             'auditor_user_id' => ['nullable', 'exists:' . AppUser::class . ',user_id'],
             'planned_at' => 'nullable|date',
-            'executed_at' => 'nullable|date',
-            'status' => 'required|string|max:50'
+            'status' => 'required|string|max:50',
         ]);
 
-        Audit::create($request->all());
+        Audit::create([
+            'org_id' => session('org_id'),
+            'audit_type' => $request->audit_type,
+            'scope' => $request->scope,
+            'auditor_user_id' => $request->auditor_user_id,
+            'planned_at' => $request->planned_at,
+            'status' => $request->status,
+        ]);
 
         return redirect()->route('audits.index')
             ->with('success', 'Auditoría creada correctamente.');
@@ -43,39 +51,60 @@ class AuditController extends Controller
 
     public function show(Audit $audit)
     {
-        $audit->load('org', 'auditor', 'findings.correctiveActions');
+        $this->authorizeAudit($audit);
+
+        $audit->load('auditor', 'findings.correctiveActions');
+
         return view('audit.audits.show', compact('audit'));
     }
 
     public function edit(Audit $audit)
     {
-        $orgs = Org::all();
+        $this->authorizeAudit($audit);
+
         $users = AppUser::all();
-        return view('audit.audits.create', compact('audit', 'orgs', 'users'));
+
+        return view('audit.audits.create', compact('audit', 'users'));
     }
 
     public function update(Request $request, Audit $audit)
     {
+        $this->authorizeAudit($audit);
+
         $request->validate([
-            'org_id' => ['required', 'exists:' . Org::class . ',org_id'],
             'audit_type' => 'required|string|max:255',
             'scope' => 'nullable|string',
             'auditor_user_id' => ['nullable', 'exists:' . AppUser::class . ',user_id'],
             'planned_at' => 'nullable|date',
-            'executed_at' => 'nullable|date',
-            'status' => 'required|string|max:50'
+            'status' => 'required|string|max:50',
         ]);
 
-        $audit->update($request->all());
+        $data = $request->only([
+            'audit_type',
+            'scope',
+            'auditor_user_id',
+            'planned_at',
+            'status',
+        ]);
+
+        // Si se cierra la auditoría
+        if ($request->status === 'CLOSED') {
+            $data['executed_at'] = now();
+        }
+
+        $audit->update($data);
 
         return redirect()->route('audits.index')
             ->with('success', 'Auditoría actualizada correctamente.');
     }
 
-    public function destroy(Audit $audit)
+    /**
+     * Validación de pertenencia a la organización activa
+     */
+    private function authorizeAudit(Audit $audit)
     {
-        $audit->delete();
-        return redirect()->route('audits.index')
-            ->with('success', 'Auditoría eliminada correctamente.');
+        if ($audit->org_id !== session('org_id')) {
+            abort(403, 'Acceso no autorizado a esta auditoría');
+        }
     }
 }
