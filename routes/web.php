@@ -18,3 +18,12 @@ Route::resource('rat', ProcessingActivityController::class);
 
 
 require __DIR__.'/risk.php';
+
+use App\Http\Controllers\Core\OrgController;
+
+Route::get('/org/select/{org}', function ($orgId) {
+    session(['org_id' => $orgId]);
+    return redirect()->back()->with('success', 'Organización activada.');
+})->name('orgs.select');
+
+Route::resource('orgs', OrgController::class);
