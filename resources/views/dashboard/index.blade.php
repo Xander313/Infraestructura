@@ -1,526 +1,647 @@
 @extends('layouts.app')
 
 @section('title', 'Dashboard - SGPD')
+@section('active_key', 'dashboard')
+@section('h1', 'Dashboard Ejecutivo')
+@section('subtitle', 'Panel de control y métricas del sistema')
 
 @section('content')
-<div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h1 class="h3 mb-0 text-primary">Dashboard SGPD</h1>
-                            <p class="text-muted mb-0">Panel de control ejecutivo</p>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-outline-primary" id="refreshDashboard">
-                                <i class="bi bi-arrow-clockwise"></i> Actualizar
-                            </button>
-                            <button class="btn btn-primary" onclick="exportDashboard()">
-                                <i class="bi bi-download"></i> Exportar
-                            </button>
-                        </div>
-                    </div>
+<div class="space-y-6">
+    
+    <!-- Header con acciones -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900">Dashboard SGPD</h2>
+            <p class="text-gray-600">Panel de control ejecutivo</p>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="location.reload()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Actualizar
+            </button>
+            <button onclick="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Exportar
+            </button>
+        </div>
+    </div>
+
+    <!-- KPIs Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <!-- Actividades -->
+        <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Actividades</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ number_format($kpis['processing_activities'] ?? 0) }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- DSARs -->
+        <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">DSAR Abiertos</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ $kpis['dsar_requests']['open'] ?? 0 }}</p>
+                    @if(($kpis['dsar_requests']['overdue'] ?? 0) > 0)
+                    <p class="text-xs text-red-600 mt-1">{{ $kpis['dsar_requests']['overdue'] }} vencidos</p>
+                    @endif
+                </div>
+                <div class="w-12 h-12 bg-yellow-50 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Riesgos -->
+        <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Riesgos Altos</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ $kpis['risks']['HIGH'] ?? 0 }}</p>
+                </div>
+                <div class="w-12 h-12 bg-red-50 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auditorías -->
+        <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Auditorías</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ $kpis['audits'] ?? 0 }}</p>
+                </div>
+                <div class="w-12 h-12 bg-indigo-50 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Capacitaciones -->
+        <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Capacitaciones</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ $kpis['trainings'] ?? 0 }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14v6l9-5M12 20l-9-5"/>
+                    </svg>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- KPIs Cards -->
-    <div class="row mb-4">
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Actividades
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ number_format($kpis['processing_activities']) }}
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-clipboard-data fa-2x text-gray-300"></i>
-                        </div>
+    <!-- Gráficos y Métricas -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Gráficos principales -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Tendencia DSAR -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Tendencia DSAR</h3>
+                        <p class="text-sm text-gray-500">Últimos 6 meses</p>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                DSAR Abiertos
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ $kpis['dsar_requests']['open'] }}
-                            </div>
-                            <div class="text-xs text-danger mt-1">
-                                @if($kpis['dsar_requests']['overdue'] > 0)
-                                    {{ $kpis['dsar_requests']['overdue'] }} vencidos
-                                @endif
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-envelope-exclamation fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-            <div class="card border-left-danger shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                Riesgos Altos
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ $kpis['risks']['HIGH'] ?? 0 }}
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-exclamation-triangle fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Auditorías en Curso
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ $kpis['audits'] }}
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-clipboard-check fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Capacitaciones Pendientes
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ $kpis['trainings'] }}
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-mortarboard fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-2 col-md-4 col-sm-6 mb-4">
-            <div class="card border-left-secondary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
-                                Performance
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ $performance['dsar_resolution_rate'] }}%
-                            </div>
-                            <div class="text-xs text-muted">Resolución DSAR</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="bi bi-graph-up fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Charts and Alerts Row -->
-    <div class="row">
-        <!-- Left Column: Charts -->
-        <div class="col-lg-8 mb-4">
-            <!-- DSAR Trend Chart -->
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-primary">Tendencia DSAR (6 meses)</h6>
-                    <select class="form-select form-select-sm w-auto" id="chartPeriod">
+                    <select class="text-sm border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                         <option value="6">6 meses</option>
                         <option value="3">3 meses</option>
                         <option value="12">1 año</option>
                     </select>
                 </div>
-                <div class="card-body">
-                    <div class="chart-area">
-                        <canvas id="dsarTrendChart"></canvas>
-                    </div>
+                <div class="h-64">
+                    <canvas id="dsarTrendChart"></canvas>
                 </div>
             </div>
 
-            <!-- Risk Distribution -->
-            <div class="row">
-                <div class="col-md-6 mb-4">
-                    <div class="card shadow h-100">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-danger">Distribución de Riesgos</h6>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="riskDistributionChart"></canvas>
-                        </div>
+            <!-- Mini gráficos -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Distribución de Riesgos -->
+                <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Distribución de Riesgos</h3>
+                    <div class="h-48">
+                        <canvas id="riskDistributionChart"></canvas>
                     </div>
                 </div>
-                <div class="col-md-6 mb-4">
-                    <div class="card shadow h-100">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-info">Estado de Auditorías</h6>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="auditStatusChart"></canvas>
-                        </div>
+
+                <!-- Estado de Auditorías -->
+                <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6">Estado de Auditorías</h3>
+                    <div class="h-48">
+                        <canvas id="auditStatusChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Column: Alerts and Activity -->
-        <div class="col-lg-4 mb-4">
-            <!-- Alerts -->
-            <div class="card shadow mb-4 border-left-warning">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="m-0 font-weight-bold text-warning">
-                        <i class="bi bi-bell-fill me-2"></i>Alertas
-                    </h6>
-                    <span class="badge bg-warning">{{ count($alerts) }}</span>
-                </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
-                        @forelse($alerts as $alert)
-                        <div class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">
-                                    <i class="bi bi-exclamation-circle text-{{ $alert->priority }} me-2"></i>
-                                    {{ $alert->title }}
-                                </h6>
-                                <small class="text-muted">{{ $alert->due_at->diffForHumans() }}</small>
-                            </div>
-                            <p class="mb-1 small text-muted">{{ $alert->type }}</p>
+        <!-- Sidebar - Alertas y Actividad -->
+        <div class="space-y-6">
+            <!-- Alertas -->
+            <div class="bg-white rounded-xl border border-yellow-200 p-6 shadow-sm">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                            </svg>
                         </div>
-                        @empty
-                        <div class="list-group-item text-center text-muted py-4">
-                            <i class="bi bi-check-circle display-6 text-success mb-3"></i>
-                            <p class="mb-0">No hay alertas pendientes</p>
+                        <div>
+                            <h3 class="font-semibold text-gray-900">Alertas</h3>
+                            <p class="text-sm text-gray-500">Vencimientos pendientes</p>
                         </div>
-                        @endforelse
                     </div>
+                    <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                        {{ count($alerts) }}
+                    </span>
                 </div>
-            </div>
-
-            <!-- Recent Activity -->
-            <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="bi bi-clock-history me-2"></i>Actividad Reciente
-                    </h6>
-                </div>
-                <div class="card-body p-0">
-                    <div class="list-group list-group-flush">
-                        @forelse($recentActivity as $activity)
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
+                
+                <div class="space-y-3">
+                    @forelse($alerts as $alert)
+                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-white transition-colors">
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-start gap-2">
+                                <div class="mt-0.5">
+                                    @if($alert->priority === 'high')
+                                        <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                                    @elseif($alert->priority === 'medium')
+                                        <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                                    @else
+                                        <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                    @endif
+                                </div>
                                 <div>
-                                    <h6 class="mb-1">{{ $activity->name }}</h6>
-                                    <p class="mb-1 small text-muted">{{ $activity->type }}</p>
+                                    <p class="text-sm font-medium text-gray-900">{{ $alert->title }}</p>
+                                    <p class="text-xs text-gray-500">{{ $alert->type }}</p>
                                 </div>
-                                <small class="text-muted">{{ $activity->created_at->diffForHumans() }}</small>
                             </div>
+                            <span class="text-xs text-gray-500 whitespace-nowrap">
+                                {{ \Carbon\Carbon::parse($alert->due_at)->diffForHumans() }}
+                            </span>
                         </div>
-                        @empty
-                        <div class="list-group-item text-center text-muted py-4">
-                            <p class="mb-0">No hay actividad reciente</p>
-                        </div>
-                        @endforelse
                     </div>
+                    @empty
+                    <div class="text-center py-6">
+                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <p class="text-sm text-gray-500">No hay alertas pendientes</p>
+                    </div>
+                    @endforelse
+                </div>
+            </div>
+
+            <!-- Actividad Reciente -->
+            <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-semibold text-gray-900">Actividad Reciente</h3>
+                            <p class="text-sm text-gray-500">Últimas actividades del sistema</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    @forelse($recentActivity as $activity)
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0 mt-0.5">
+                            @if($activity->type === 'Actividad de Tratamiento')
+                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                </svg>
+                            </div>
+                            @elseif($activity->type === 'DSAR')
+                            <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            @else
+                            <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            @endif
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">{{ $activity->name }}</p>
+                            <p class="text-xs text-gray-500">{{ $activity->type }}</p>
+                        </div>
+                        <span class="text-xs text-gray-500 whitespace-nowrap">
+                            {{ \Carbon\Carbon::parse($activity->created_at)->diffForHumans() }}
+                        </span>
+                    </div>
+                    @empty
+                    <div class="text-center py-6">
+                        <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <p class="text-sm text-gray-500">No hay actividad reciente</p>
+                    </div>
+                    @endforelse
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Performance Indicators -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Indicadores de Performance</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row text-center">
-                        <div class="col-md-3 mb-3">
-                            <div class="card border-0 bg-light">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center justify-content-center mb-2">
-                                        <div class="bg-primary rounded-circle p-3 me-3">
-                                            <i class="bi bi-envelope-check text-white"></i>
-                                        </div>
-                                        <div>
-                                            <h3 class="mb-0">{{ $performance['dsar_resolution_rate'] }}%</h3>
-                                        </div>
-                                    </div>
-                                    <p class="text-muted mb-0">Tasa Resolución DSAR</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="card border-0 bg-light">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center justify-content-center mb-2">
-                                        <div class="bg-success rounded-circle p-3 me-3">
-                                            <i class="bi bi-clipboard-check text-white"></i>
-                                        </div>
-                                        <div>
-                                            <h3 class="mb-0">{{ $performance['audit_completion_rate'] }}%</h3>
-                                        </div>
-                                    </div>
-                                    <p class="text-muted mb-0">Completitud Auditorías</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="card border-0 bg-light">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center justify-content-center mb-2">
-                                        <div class="bg-info rounded-circle p-3 me-3">
-                                            <i class="bi bi-mortarboard text-white"></i>
-                                        </div>
-                                        <div>
-                                            <h3 class="mb-0">{{ $performance['training_completion_rate'] }}%</h3>
-                                        </div>
-                                    </div>
-                                    <p class="text-muted mb-0">Completitud Capacitaciones</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3 mb-3">
-                            <div class="card border-0 bg-light">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-center justify-content-center mb-2">
-                                        <div class="bg-warning rounded-circle p-3 me-3">
-                                            <i class="bi bi-shield-check text-white"></i>
-                                        </div>
-                                        <div>
-                                            <h3 class="mb-0">{{ $performance['risk_coverage'] }}%</h3>
-                                        </div>
-                                    </div>
-                                    <p class="text-muted mb-0">Cobertura de Riesgos</p>
-                                </div>
-                            </div>
-                        </div>
+    <!-- Indicadores de Performance -->
+    <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+        <h3 class="text-lg font-semibold text-gray-900 mb-6">Indicadores de Performance</h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <!-- Resolución DSAR -->
+            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
                     </div>
+                    <span class="text-xs font-medium px-2 py-1 bg-blue-200 text-blue-800 rounded-full">DSAR</span>
                 </div>
+                <p class="text-2xl font-bold text-gray-900">{{ $performance['dsar_resolution_rate'] ?? 0 }}%</p>
+                <p class="text-sm text-gray-600 mt-1">Tasa de Resolución</p>
+            </div>
+
+            <!-- Completitud Auditorías -->
+            <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs font-medium px-2 py-1 bg-green-200 text-green-800 rounded-full">Auditorías</span>
+                </div>
+                <p class="text-2xl font-bold text-gray-900">{{ $performance['audit_completion_rate'] ?? 0 }}%</p>
+                <p class="text-sm text-gray-600 mt-1">Completitud</p>
+            </div>
+
+            <!-- Completitud Capacitaciones -->
+            <div class="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs font-medium px-2 py-1 bg-indigo-200 text-indigo-800 rounded-full">Capacitación</span>
+                </div>
+                <p class="text-2xl font-bold text-gray-900">{{ $performance['training_completion_rate'] ?? 0 }}%</p>
+                <p class="text-sm text-gray-600 mt-1">Completitud</p>
+            </div>
+
+            <!-- Cobertura de Riesgos -->
+            <div class="bg-gradient-to-br from-amber-50 to-amber-100 rounded-xl p-5">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-10 h-10 bg-amber-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                        </svg>
+                    </div>
+                    <span class="text-xs font-medium px-2 py-1 bg-amber-200 text-amber-800 rounded-full">Riesgos</span>
+                </div>
+                <p class="text-2xl font-bold text-gray-900">{{ $performance['risk_coverage'] ?? 0 }}%</p>
+                <p class="text-sm text-gray-600 mt-1">Cobertura DPIA</p>
             </div>
         </div>
     </div>
 </div>
-
-<!-- Modal for Alert Details -->
-<div class="modal fade" id="alertModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Detalle de Alerta</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="alertDetails">
-                <!-- Content loaded via AJAX -->
-            </div>
-        </div>
-    </div>
-</div>
-@endsection
-
-@push('styles')
-<style>
-    .card {
-        border-radius: 10px;
-        transition: transform 0.2s;
-    }
-    .card:hover {
-        transform: translateY(-2px);
-    }
-    .border-left-primary { border-left: 4px solid #4e73df !important; }
-    .border-left-success { border-left: 4px solid #1cc88a !important; }
-    .border-left-info { border-left: 4px solid #36b9cc !important; }
-    .border-left-warning { border-left: 4px solid #f6c23e !important; }
-    .border-left-danger { border-left: 4px solid #e74a3b !important; }
-    .border-left-secondary { border-left: 4px solid #858796 !important; }
-    .chart-area { position: relative; height: 300px; width: 100%; }
-</style>
-@endpush
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Chart Colors based on image colors
-    const chartColors = {
+    // Colors matching your layout
+    const colors = {
         primary: '#4e73df',
         success: '#1cc88a',
         info: '#36b9cc',
         warning: '#f6c23e',
-        danger: '#e74a3b',
-        secondary: '#858796'
+        danger: '#e74a3b'
     };
 
-    // Initialize DSAR Trend Chart
-    const dsarCtx = document.getElementById('dsarTrendChart').getContext('2d');
-    const dsarChart = new Chart(dsarCtx, {
-        type: 'line',
-        data: {
-            labels: @json($charts['dsar_trend']->pluck('month')->map(fn($m) => new Date($m).toLocaleDateString('es-ES', {month: 'short', year: 'numeric'}))),
-            datasets: [{
-                label: 'DSARs',
-                data: @json($charts['dsar_trend']->pluck('count')),
-                borderColor: chartColors.primary,
-                backgroundColor: 'rgba(78, 115, 223, 0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            }
+    // Helper para formatear fechas
+    function formatMonth(dateStr) {
+        try {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('es-ES', {month: 'short', year: 'numeric'});
+        } catch(e) {
+            return dateStr;
         }
-    });
+    }
 
-    // Initialize Risk Distribution Chart
-    const riskCtx = document.getElementById('riskDistributionChart').getContext('2d');
-    const riskChart = new Chart(riskCtx, {
-        type: 'doughnut',
-        data: {
-            labels: @json($charts['risk_distribution']->pluck('status')),
-            datasets: [{
-                data: @json($charts['risk_distribution']->pluck('count')),
-                backgroundColor: [
-                    chartColors.danger,
-                    chartColors.warning,
-                    chartColors.primary,
-                    chartColors.info
-                ]
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
-        }
-    });
-
-    // Initialize Audit Status Chart
-    const auditCtx = document.getElementById('auditStatusChart').getContext('2d');
-    const auditChart = new Chart(auditCtx, {
-        type: 'bar',
-        data: {
-            labels: @json($charts['audit_status']->pluck('status')),
-            datasets: [{
-                label: 'Auditorías',
-                data: @json($charts['audit_status']->pluck('count')),
-                backgroundColor: chartColors.info,
-                borderColor: chartColors.info,
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
+    // DSAR Trend Chart
+    const dsarCtx = document.getElementById('dsarTrendChart');
+    if (dsarCtx) {
+        const dsarMonths = {!! json_encode($charts['dsar_trend']->pluck('month')->toArray()) !!};
+        const dsarCounts = {!! json_encode($charts['dsar_trend']->pluck('count')->toArray()) !!};
+        const dsarLabels = dsarMonths.map(m => formatMonth(m));
+        
+        new Chart(dsarCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: dsarLabels,
+                datasets: [{
+                    label: 'DSARs',
+                    data: dsarCounts,
+                    borderColor: colors.primary,
+                    backgroundColor: 'rgba(78, 115, 223, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { stepSize: 1 }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return Number.isInteger(value) ? value : '';
+                            }
+                        }
+                    }
                 }
             }
-        }
-    });
-
-    // Dashboard Refresh
-    document.getElementById('refreshDashboard').addEventListener('click', function() {
-        const btn = this;
-        btn.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i> Actualizando...';
-        btn.disabled = true;
-
-        // Refresh KPIs
-        fetch('{{ route("dashboard.api.kpis") }}')
-            .then(response => response.json())
-            .then(data => {
-                // Update KPI cards
-                document.querySelector('[data-kpi="processing_activities"]').textContent = 
-                    data.processing_activities.toLocaleString();
-                document.querySelector('[data-kpi="dsar_open"]').textContent = 
-                    data.dsar_requests.open;
-                // ... update other KPIs
-            })
-            .finally(() => {
-                btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Actualizar';
-                btn.disabled = false;
-            });
-    });
-
-    // Alert Details
-    function showAlertDetails(alertId, type) {
-        fetch(`/api/alerts/${alertId}?type=${type}`)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('alertDetails').innerHTML = `
-                    <h6>${data.title}</h6>
-                    <p><strong>Tipo:</strong> ${data.type}</p>
-                    <p><strong>Vencimiento:</strong> ${new Date(data.due_at).toLocaleString()}</p>
-                    <p><strong>Prioridad:</strong> <span class="badge bg-${data.priority}">${data.priority.toUpperCase()}</span></p>
-                    <hr>
-                    <p>${data.description || 'Sin descripción adicional'}</p>
-                `;
-                new bootstrap.Modal(document.getElementById('alertModal')).show();
-            });
+        });
     }
 
-    // Export Dashboard
-    function exportDashboard() {
-        window.print();
+    // Risk Distribution Chart
+    const riskCtx = document.getElementById('riskDistributionChart');
+    if (riskCtx) {
+        const riskLabels = {!! json_encode($charts['risk_distribution']->pluck('status')->toArray()) !!};
+        const riskData = {!! json_encode($charts['risk_distribution']->pluck('count')->toArray()) !!};
+        
+        new Chart(riskCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: riskLabels,
+                datasets: [{
+                    data: riskData,
+                    backgroundColor: [colors.danger, colors.warning, colors.primary, colors.info],
+                    borderWidth: 1,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { 
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                },
+                cutout: '60%'
+            }
+        });
     }
 
-    // Auto-refresh every 5 minutes
-    setInterval(() => {
-        if (!document.hidden) {
-            location.reload();
+    // Audit Status Chart
+    const auditCtx = document.getElementById('auditStatusChart');
+    if (auditCtx) {
+        const auditLabels = {!! json_encode($charts['audit_status']->pluck('status')->toArray()) !!};
+        const auditData = {!! json_encode($charts['audit_status']->pluck('count')->toArray()) !!};
+        
+        new Chart(auditCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: auditLabels,
+                datasets: [{
+                    label: 'Auditorías',
+                    data: auditData,
+                    backgroundColor: colors.info,
+                    borderColor: colors.info,
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { 
+                        beginAtZero: true, 
+                        ticks: { 
+                            stepSize: 1,
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ============================================
+    // AUTO-REFRESH SYSTEM
+    // ============================================
+    
+    let autoRefreshInterval;
+
+    function startAutoRefresh() {
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
         }
-    }, 300000);
+        
+        autoRefreshInterval = setInterval(() => {
+            refreshDashboardData();
+        }, 30000); // 30 segundos
+    }
+
+    async function refreshDashboardData() {
+        try {
+            document.body.classList.add('refreshing');
+            
+            const [kpisResponse, alertsResponse, activityResponse] = await Promise.all([
+                fetch('{{ route("dashboard.api.kpis") }}'),
+                fetch('{{ route("dashboard.api.alerts") }}'),
+                fetch('{{ route("dashboard.api.activity") }}')
+            ]);
+            
+            const kpis = await kpisResponse.json();
+            const alerts = await alertsResponse.json();
+            const activity = await activityResponse.json();
+            
+            // Actualizar KPIs en la UI (necesitas IDs en tus elementos)
+            updateKPIValue('.kpi-actividades', kpis.processing_activities);
+            updateKPIValue('.kpi-dsar-open', kpis.dsar_requests.open);
+            updateKPIValue('.kpi-dsar-overdue', kpis.dsar_requests.overdue);
+            updateKPIValue('.kpi-riesgos-high', kpis.risks.HIGH || 0);
+            updateKPIValue('.kpi-auditorias', kpis.audits);
+            updateKPIValue('.kpi-capacitaciones', kpis.trainings);
+            
+            // Actualizar notificación count
+            if (window.sgpdLayout && window.sgpdLayout.notificationCount !== undefined) {
+                window.sgpdLayout.notificationCount = alerts.length;
+            }
+            
+            showUpdateNotification('Dashboard actualizado');
+            
+        } catch (error) {
+            console.error('Error refreshing dashboard:', error);
+        } finally {
+            document.body.classList.remove('refreshing');
+        }
+    }
+
+    function updateKPIValue(selector, value) {
+        const element = document.querySelector(selector);
+        if (element) {
+            const current = parseInt(element.textContent.replace(/,/g, ''));
+            if (!isNaN(current) && current !== value) {
+                animateCount(element, current, value);
+            }
+        }
+    }
+
+    function animateCount(element, start, end) {
+        const duration = 500;
+        const startTime = performance.now();
+        
+        function update(currentTime) {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            const currentValue = Math.floor(start + (end - start) * progress);
+            element.textContent = currentValue.toLocaleString();
+            
+            if (progress < 1) {
+                requestAnimationFrame(update);
+            }
+        }
+        
+        requestAnimationFrame(update);
+    }
+
+    function showUpdateNotification(message) {
+        // Crear notificación toast
+        const toast = document.createElement('div');
+        toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg transform translate-y-full opacity-0 transition-all duration-300 z-50';
+        toast.textContent = `🔄 ${message}`;
+        document.body.appendChild(toast);
+        
+        // Animar entrada
+        setTimeout(() => {
+            toast.classList.remove('translate-y-full', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+        }, 10);
+        
+        // Auto-remover
+        setTimeout(() => {
+            toast.classList.add('translate-y-full', 'opacity-0');
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 300);
+        }, 3000);
+    }
+
+    function setupTabSync() {
+        if (typeof BroadcastChannel !== 'undefined') {
+            const channel = new BroadcastChannel('dashboard-updates');
+            
+            channel.addEventListener('message', (event) => {
+                if (event.data === 'dashboard-updated') {
+                    refreshDashboardData();
+                    showUpdateNotification('Cambios detectados - Actualizando...');
+                }
+            });
+            
+            window.dashboardNotifyUpdate = function() {
+                channel.postMessage('dashboard-updated');
+                refreshDashboardData();
+            };
+        }
+    }
+
+    // Inicializar
+    document.addEventListener('DOMContentLoaded', () => {
+        startAutoRefresh();
+        setupTabSync();
+        
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                refreshDashboardData();
+            }
+        });
+        
+        window.addEventListener('online', refreshDashboardData);
+    });
+
+    // Estilos para el indicador de refresco
+    const style = document.createElement('style');
+    style.textContent = `
+        .refreshing::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 3px;
+            height: 100%;
+            background: linear-gradient(to bottom, #4f46e5, #7c3aed);
+            z-index: 9999;
+            animation: refresh-pulse 30s linear infinite;
+        }
+        
+        @keyframes refresh-pulse {
+            0% { height: 0%; opacity: 0.7; }
+            50% { height: 100%; opacity: 0.3; }
+            100% { height: 0%; opacity: 0.7; }
+        }
+        
+        .kpi-updated {
+            animation: kpi-pulse 1s ease-in-out;
+        }
+        
+        @keyframes kpi-pulse {
+            0% { background-color: transparent; }
+            50% { background-color: rgba(34, 197, 94, 0.1); }
+            100% { background-color: transparent; }
+        }
+    `;
+    document.head.appendChild(style);
 </script>
 @endpush
+@endsection

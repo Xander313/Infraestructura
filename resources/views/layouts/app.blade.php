@@ -55,7 +55,7 @@
         [
             'label' => 'Dashboard',
             'items' => [
-                ['label' => 'Inicio', 'href' => url('/'), 'key' => 'dashboard'],
+                ['label' => 'Inicio', 'href' => route('dashboard'), 'key' => 'dashboard'],
             ],
         ],
         [
@@ -132,36 +132,46 @@
             <div class="flex items-center space-x-2">
                 {{-- Notificaciones --}}
                 <div class="relative">
-                    <button type="button"
-                            @click="showNotifications = !showNotifications"
-                            class="relative p-2 hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            aria-label="Notificaciones">
+                    <button
+                        type="button"
+                        @click="showNotifications = !showNotifications; loadRealNotifications()"
+                        class="relative p-2 hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        aria-label="Notificaciones">
                         <svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                         </svg>
-                        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                        <span x-show="notificationCount > 0" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                        <span x-show="notificationCount > 0" class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center" x-text="notificationCount"></span>
                     </button>
 
                     {{-- Dropdown --}}
-                    <div x-show="showNotifications"
-                         @click.away="showNotifications = false"
-                         x-transition.opacity
-                         class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
+                    <div
+                        x-show="showNotifications"
+                        @click.away="showNotifications = false"
+                        x-transition.opacity
+                        class="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
                         <div class="p-4 border-b border-gray-100">
-                            <h3 class="font-semibold text-gray-900">Notificaciones</h3>
-                            <p class="text-xs text-gray-500 mt-0.5">Actividad reciente del sistema</p>
+                            <h3 class="font-semibold text-gray-900">Notificaciones del Sistema</h3>
+                            <p class="text-xs text-gray-500 mt-0.5" x-text="`${notificationCount} alertas pendientes`"></p>
                         </div>
-                        <div class="divide-y divide-gray-100 max-h-80 overflow-y-auto">
-                            <template x-for="n in notifications" :key="n.id">
-                                <div class="p-4 hover:bg-gray-50">
-                                    <p class="text-sm font-medium text-gray-900" x-text="n.title"></p>
-                                    <p class="text-xs text-gray-500 mt-1" x-text="n.time"></p>
-                                </div>
-                            </template>
-                            <div x-show="notifications.length === 0" class="p-6 text-center text-sm text-gray-500">
-                                Sin notificaciones.
+                        
+                        <!-- CONTENEDOR DONDE SE MOSTRARÁN LAS NOTIFICACIONES REALES -->
+                        <div id="realNotifications" class="divide-y divide-gray-100 max-h-80 overflow-y-auto">
+                            <!-- Las notificaciones se cargarán aquí dinámicamente -->
+                            <div x-show="loadingNotifications" class="p-6 text-center">
+                                <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                                <p class="text-sm text-gray-500 mt-2">Cargando notificaciones...</p>
                             </div>
+                        </div>
+                        
+                        <div class="p-3 border-t border-gray-100 bg-gray-50">
+                            <button @click="markAllAsRead()" class="text-xs text-blue-600 hover:text-blue-800">
+                                Marcar todas como leídas
+                            </button>
+                            <a href="{{ route('dashboard') }}" class="text-xs text-gray-600 hover:text-gray-800 ml-3">
+                                Ver todas en dashboard
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -339,42 +349,173 @@
 
 <script>
     function sgpdLayout() {
-        return {
-            sidebarOpen: false,
-            showNotifications: false,
-            hoverKey: null,
+    return {
+        sidebarOpen: false,
+        showNotifications: false,
+        hoverKey: null,
+        loadingNotifications: false,
+        notificationCount: 0,
 
-            // Cada vista setea: @section('active_key','rat') etc.
-            activeKey: '{{ trim($__env->yieldContent('active_key')) ?: 'dashboard' }}',
+        activeKey: '{{ trim($__env->yieldContent('active_key')) ?: 'dashboard' }}',
 
-            notifications: [
-                { id: 1, title: 'Nueva solicitud DSAR registrada', time: 'hace 5 min' },
-                { id: 2, title: 'Riesgo marcado como ALTO', time: 'hace 1 hora' },
-                { id: 3, title: 'Auditoría finalizada', time: 'hace 1 día' },
-            ],
+        notifications: [], // Ahora vacío, se cargará dinámicamente
 
-            toggleSidebar() {
-                this.sidebarOpen = !this.sidebarOpen;
-                this.showNotifications = false;
-            },
+        toggleSidebar() {
+            this.sidebarOpen = !this.sidebarOpen;
+            this.showNotifications = false;
+        },
 
-            closeAll() {
-                this.sidebarOpen = false;
-                this.showNotifications = false;
-            },
+        closeAll() {
+            this.sidebarOpen = false;
+            this.showNotifications = false;
+        },
 
-            isMobile() {
-                return window.matchMedia('(max-width: 767px)').matches;
-            },
+        isMobile() {
+            return window.matchMedia('(max-width: 767px)').matches;
+        },
 
-            // Navegación controlada (si luego quieren reactivar goTo)
-            goTo(href, key) {
-                this.activeKey = key;
-                if (!href || href === '#') return;
-                window.location.href = href;
+        // Cargar notificaciones reales desde el dashboard
+        async loadRealNotifications() {
+            if (this.loadingNotifications) return;
+            
+            this.loadingNotifications = true;
+            try {
+                const response = await fetch('/api/dashboard/alerts');
+                const alerts = await response.json();
+                
+                this.notifications = alerts.map(alert => ({
+                    id: alert.id,
+                    title: alert.title,
+                    type: alert.type,
+                    priority: alert.priority,
+                    due_at: alert.due_at,
+                    time: this.formatTimeAgo(alert.due_at)
+                }));
+                
+                this.notificationCount = this.notifications.length;
+                this.renderNotifications();
+            } catch (error) {
+                console.error('Error cargando notificaciones:', error);
+                this.notifications = [];
+                this.notificationCount = 0;
+            } finally {
+                this.loadingNotifications = false;
             }
+        },
+
+        // Formatear tiempo relativo
+        formatTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+
+            if (diffMins < 1) return 'ahora mismo';
+            if (diffMins < 60) return `hace ${diffMins} min`;
+            if (diffHours < 24) return `hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+            return `hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+        },
+
+        // Renderizar notificaciones en el dropdown
+        // Renderizar notificaciones en el dropdown
+        renderNotifications() {
+            const container = document.getElementById('realNotifications');
+            if (!container) {
+                console.error('No se encontró el contenedor de notificaciones');
+                return;
+            }
+
+            // Limpiar contenido previo
+            container.innerHTML = '';
+
+            if (this.notifications.length === 0) {
+                container.innerHTML = `
+                    <div class="p-6 text-center text-sm text-gray-500">
+                        <svg class="w-12 h-12 mx-auto text-green-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p>No hay notificaciones pendientes</p>
+                        <p class="text-xs text-gray-400 mt-1">Las notificaciones se sincronizan con las alertas del dashboard</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            this.notifications.forEach(notif => {
+                // Determinar color basado en prioridad
+                let priorityColor, priorityText;
+                if (notif.priority === 'high') {
+                    priorityColor = 'red';
+                    priorityText = 'Alta';
+                } else if (notif.priority === 'medium') {
+                    priorityColor = 'yellow';
+                    priorityText = 'Media';
+                } else {
+                    priorityColor = 'blue';
+                    priorityText = 'Baja';
+                }
+                
+                html += `
+                    <div class="p-4 hover:bg-gray-50 cursor-pointer border-l-4 border-${priorityColor}-500">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-gray-900">${notif.title}</p>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="text-xs px-2 py-0.5 bg-${priorityColor}-100 text-${priorityColor}-800 rounded-full">
+                                        ${notif.type}
+                                    </span>
+                                    <span class="text-xs px-2 py-0.5 bg-gray-100 text-gray-800 rounded-full">
+                                        ${priorityText}
+                                    </span>
+                                    <span class="text-xs text-gray-500">${notif.time}</span>
+                                </div>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600 ml-2" 
+                                    @click="removeNotification(${notif.id})"
+                                    title="Eliminar notificación">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        },
+
+        // Marcar todas como leídas
+        async markAllAsRead() {
+            this.notifications = [];
+            this.notificationCount = 0;
+            this.renderNotifications();
+            
+            // Aquí podrías hacer una llamada API para marcar como leídas en el backend
+            try {
+                await fetch('/api/notifications/mark-read', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+            } catch (error) {
+                console.error('Error marcando notificaciones:', error);
+            }
+        },
+
+        // Eliminar una notificación
+        removeNotification(id) {
+            this.notifications = this.notifications.filter(n => n.id !== id);
+            this.notificationCount = this.notifications.length;
+            this.renderNotifications();
         }
     }
+}
 </script>
 
 @stack('scripts')

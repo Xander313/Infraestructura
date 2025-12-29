@@ -700,6 +700,66 @@ function csrf() {
             }
         }
     }
+
+    // Función para guardar/actualizar DPIA (ejemplo)
+async function saveDpia() {
+    try {
+        // Tu lógica actual de guardado...
+        const formData = new FormData(document.getElementById('dpiaForm'));
+        const response = await fetch('/risk/dpias', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            // ✅ REGISTRO GUARDADO EXITOSAMENTE
+            
+            // 1. Notificar al dashboard que hay cambios
+            if (window.dashboardNotifyUpdate) {
+                window.dashboardNotifyUpdate();
+            }
+            
+            // 2. Si las notificaciones están abiertas, recargarlas
+            if (window.sgpdLayout && window.sgpdLayout.showNotifications) {
+                await window.sgpdLayout.loadRealNotifications();
+            }
+            
+            // 3. Mostrar mensaje de éxito (sin alert, mejor con toast)
+            showToast('success', 'DPIA guardado exitosamente. Dashboard actualizado.');
+            
+            // 4. Cerrar modal/limpiar formulario
+            closeModal();
+            
+        } else {
+            showToast('error', result.message || 'Error al guardar');
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('error', 'Error de conexión');
+    }
+}
+
+// Función helper para mostrar toast
+function showToast(type, message) {
+    // Usar la librería que tengas (Toastify, SweetAlert, etc.)
+    if (typeof Toastify === 'function') {
+        Toastify({
+            text: message,
+            duration: 3000,
+            gravity: "top",
+            position: "right",
+            backgroundColor: type === 'success' ? "#10b981" : "#ef4444"
+        }).showToast();
+    } else {
+        alert(message); // Fallback
+    }
+}
 </script>
 @endpush
 
