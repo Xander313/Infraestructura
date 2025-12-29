@@ -65,9 +65,9 @@
                         </div>
 
                         <div class="col-md-6 mt-3">
-    <h6 class="text-muted">Organización</h6>
-    <p>{{ $dataSubject->org->name ?? 'No disponible' }}</p>
-</div>
+                            <h6 class="text-muted">Organización</h6>
+                            <p>{{ $dataSubject->org->name ?? 'No disponible' }}</p>
+                        </div>
 
                         <div class="col-md-6 mt-3">
                             <h6 class="text-muted">Fecha de Registro</h6>
@@ -89,12 +89,10 @@
                                 <i class="bi bi-check-circle"></i> Consentimiento Activo
                             </span>
                         @else
-                            <button type="button" 
-                                    class="btn btn-sm btn-primary" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#consentModal">
+                            <a href="{{ route('data-subjects.consent.create', $dataSubject) }}" 
+                               class="btn btn-sm btn-primary">
                                 <i class="bi bi-plus-circle"></i> Registrar Consentimiento
-                            </button>
+                            </a>
                         @endif
                     </div>
                 </div>
@@ -107,6 +105,8 @@
                                     <tr>
                                         <th>Fecha Otorgado</th>
                                         <th>Fecha Revocado</th>
+                                        <th>Aviso ID</th>
+                                        <th>Propósito ID</th>
                                         <th>Estado</th>
                                         <th>Acciones</th>
                                     </tr>
@@ -122,6 +122,8 @@
                                                     —
                                                 @endif
                                             </td>
+                                            <td>{{ $consent->notice_ver_id ?? '—' }}</td>
+                                            <td>{{ $consent->purpose_id ?? '—' }}</td>
                                             <td>
                                                 @if($consent->revoked_at)
                                                     <span class="badge bg-danger">Revocado</span>
@@ -134,9 +136,8 @@
                                                     <form action="{{ route('data-subjects.consent.revoke', $consent) }}" 
                                                           method="POST"
                                                           class="d-inline"
-                                                          onsubmit="return confirm('¿Revocar este consentimiento?')">
+                                                          onsubmit="return confirm('¿Estás seguro de revocar este consentimiento?')">
                                                         @csrf
-                                                        @method('POST')
                                                         <button type="submit" class="btn btn-sm btn-outline-danger">
                                                             <i class="bi bi-x-circle"></i> Revocar
                                                         </button>
@@ -152,12 +153,10 @@
                         <div class="text-center py-4">
                             <i class="bi bi-clipboard-x display-4 text-muted"></i>
                             <p class="text-muted mt-2">No hay consentimientos registrados</p>
-                            <button type="button" 
-                                    class="btn btn-primary" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#consentModal">
+                            <a href="{{ route('data-subjects.consent.create', $dataSubject) }}" 
+                               class="btn btn-primary">
                                 <i class="bi bi-plus-circle"></i> Registrar primer consentimiento
-                            </button>
+                            </a>
                         </div>
                     @endif
                 </div>
@@ -198,12 +197,10 @@
                 <div class="card-body">
                     <div class="d-grid gap-2">
                         @if(!$dataSubject->activeConsent())
-                            <button type="button" 
-                                    class="btn btn-outline-primary" 
-                                    data-bs-toggle="modal" 
-                                    data-bs-target="#consentModal">
+                            <a href="{{ route('data-subjects.consent.create', $dataSubject) }}" 
+                               class="btn btn-outline-primary">
                                 <i class="bi bi-clipboard-check"></i> Registrar Consentimiento
-                            </button>
+                            </a>
                         @endif
                         <a href="{{ route('data-subjects.edit', $dataSubject) }}" 
                            class="btn btn-outline-warning">
@@ -226,68 +223,10 @@
         </div>
     </div>
 </div>
-
-<!-- Modal para Registrar Consentimiento -->
-<div class="modal fade" id="consentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">
-                    <i class="bi bi-clipboard-check"></i> Registrar Consentimiento
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form action="{{ route('data-subjects.consent.store', $dataSubject) }}" method="POST">
-                @csrf
-                <div class="modal-body">
-                    <p>¿Desea registrar el consentimiento para <strong>{{ $dataSubject->full_name }}</strong>?</p>
-                    
-                    <div class="mb-3">
-                        <label for="notice_ver_id" class="form-label">ID de Aviso (opcional)</label>
-                        <input type="number" 
-                               name="notice_ver_id" 
-                               id="notice_ver_id"
-                               class="form-control"
-                               placeholder="Referencia al documento de aviso">
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="purpose_id" class="form-label">ID de Propósito (opcional)</label>
-                        <input type="number" 
-                               name="purpose_id" 
-                               id="purpose_id"
-                               class="form-control"
-                               placeholder="Referencia al propósito">
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="given_at" class="form-label">Fecha de Otorgamiento (opcional)</label>
-                        <input type="datetime-local" 
-                               name="given_at" 
-                               id="given_at"
-                               class="form-control">
-                        <small class="text-muted">Si se deja vacío, se usará la fecha actual</small>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-check-circle"></i> Registrar Consentimiento
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 @endsection
 
 @push('scripts')
 <script>
-    // Establecer fecha y hora actual por defecto
-    document.addEventListener('DOMContentLoaded', function() {
-        const now = new Date();
-        const localDateTime = now.toISOString().slice(0, 16);
-        document.getElementById('given_at').value = localDateTime;
-    });
+    // Cualquier script adicional que necesites
 </script>
 @endpush

@@ -12,6 +12,12 @@ class DataSubjectController extends Controller
 {
     public function index(Request $request)
     {
+        // Verificar si hay organización activa
+        if (!session('org_id')) {
+            return redirect()->route('orgs.index')
+                ->with('error', 'Debes seleccionar una organización primero.');
+        }
+
         $query = DataSubject::where('org_id', session('org_id'))
             ->with(['consents' => function($q) {
                 $q->orderBy('given_at', 'desc');
@@ -33,12 +39,20 @@ class DataSubjectController extends Controller
 
     public function create()
     {
+        if (!session('org_id')) {
+            return redirect()->route('orgs.index')
+                ->with('error', 'Debes seleccionar una organización primero.');
+        }
+
         return view('consent.create');
     }
 
     public function store(Request $request)
     {
-        // Validación personalizada para unicidad
+        if (!session('org_id')) {
+            return back()->with('error', 'No hay una organización activa. Por favor, selecciona una organización primero.')->withInput();
+        }
+        
         $request->validate([
             'id_type' => 'required|string|max:50',
             'id_number' => [
@@ -46,7 +60,11 @@ class DataSubjectController extends Controller
                 'string',
                 'max:100',
                 function ($attribute, $value, $fail) use ($request) {
-                    // Validación personalizada para unicidad
+                    if (!session('org_id')) {
+                        $fail('No hay organización activa.');
+                        return;
+                    }
+                    
                     $exists = DataSubject::where('org_id', session('org_id'))
                         ->where('id_type', $request->id_type)
                         ->where('id_number', $value)
@@ -85,21 +103,30 @@ class DataSubjectController extends Controller
     }
 
     public function show(DataSubject $dataSubject)
-{
-    if ($dataSubject->org_id != session('org_id')) {
-        abort(403, 'No autorizado');
-    }
+    {
+        if (!session('org_id')) {
+            return redirect()->route('orgs.index')
+                ->with('error', 'Debes seleccionar una organización primero.');
+        }
 
-    // CARGAR LAS RELACIONES NECESARIAS
-    $dataSubject->load(['org', 'consents']);
-    
-    $consents = $dataSubject->consents()->orderBy('given_at', 'desc')->get();
-    
-    return view('consent.show', compact('dataSubject', 'consents'));
-}
+        if ($dataSubject->org_id != session('org_id')) {
+            abort(403, 'No autorizado');
+        }
+
+        $dataSubject->load(['org', 'consents']);
+        
+        $consents = $dataSubject->consents()->orderBy('given_at', 'desc')->get();
+        
+        return view('consent.show', compact('dataSubject', 'consents'));
+    }
 
     public function edit(DataSubject $dataSubject)
     {
+        if (!session('org_id')) {
+            return redirect()->route('orgs.index')
+                ->with('error', 'Debes seleccionar una organización primero.');
+        }
+
         if ($dataSubject->org_id != session('org_id')) {
             abort(403, 'No autorizado');
         }
@@ -113,7 +140,6 @@ class DataSubjectController extends Controller
             abort(403, 'No autorizado');
         }
 
-        // Validación personalizada para unicidad (ignorando el registro actual)
         $request->validate([
             'id_type' => 'required|string|max:50',
             'id_number' => [
@@ -121,7 +147,6 @@ class DataSubjectController extends Controller
                 'string',
                 'max:100',
                 function ($attribute, $value, $fail) use ($request, $dataSubject) {
-                    // Validación personalizada para unicidad
                     $exists = DataSubject::where('org_id', session('org_id'))
                         ->where('id_type', $request->id_type)
                         ->where('id_number', $value)
@@ -181,6 +206,22 @@ class DataSubjectController extends Controller
         }
     }
 
+    public function createConsent(DataSubject $dataSubject)
+    {
+        if ($dataSubject->org_id != session('org_id')) {
+            abort(403, 'No autorizado');
+        }
+
+        // Verificar si ya tiene consentimiento activo
+        if ($dataSubject->activeConsent()) {
+            return redirect()
+                ->route('data-subjects.show', $dataSubject)
+                ->with('error', 'Este titular ya tiene un consentimiento activo.');
+        }
+
+        return view('consent.create-consent', compact('dataSubject'));
+    }
+
     public function storeConsent(Request $request, DataSubject $dataSubject)
     {
         if ($dataSubject->org_id != session('org_id')) {
@@ -195,17 +236,23 @@ class DataSubjectController extends Controller
 
         DB::beginTransaction();
         try {
+            // Revocar consentimiento activo anterior si existe
+            $dataSubject->consents()->whereNull('revoked_at')->update(['revoked_at' => now()]);
+            
             Consent::create([
                 'subject_id' => $dataSubject->subject_id,
-                'notice_ver_id' => $request->notice_ver_id,
-                'purpose_id' => $request->purpose_id,
-                'given_at' => $request->given_at ?? now()
+                'notice_ver_id' => $request->notice_ver_id ?: null,
+                'purpose_id' => $request->purpose_id ?: null,
+                'given_at' => $request->given_at ?: now(),
+                'revoked_at' => null
             ]);
 
             DB::commit();
+            
             return redirect()
                 ->route('data-subjects.show', $dataSubject)
                 ->with('success', 'Consentimiento registrado correctamente.');
+            
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Error al registrar consentimiento: ' . $e->getMessage());

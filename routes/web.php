@@ -27,15 +27,19 @@ Route::get('/org/select/{org}', function ($orgId) {
 
 Route::resource('orgs', OrgController::class);
 
-// Data Subjects Routes (Fase 6) - SIN prefijo
+// Data Subjects Routes (Fase 6) - Rutas completas
 Route::resource('data-subjects', DataSubjectController::class);
+
+// Rutas adicionales para consentimientos
+Route::get('/data-subjects/{dataSubject}/consent/create', 
+    [DataSubjectController::class, 'createConsent'])
+    ->name('data-subjects.consent.create');
     
-// Rutas para consentimientos
-Route::post('data-subjects/{dataSubject}/consent', 
+Route::post('/data-subjects/{dataSubject}/consent', 
     [DataSubjectController::class, 'storeConsent'])
     ->name('data-subjects.consent.store');
     
-Route::post('consent/{consent}/revoke', 
+Route::post('/consent/{consent}/revoke', 
     [DataSubjectController::class, 'revokeConsent'])
     ->name('data-subjects.consent.revoke');
 
