@@ -41,3 +41,15 @@ Route::post('consent/{consent}/revoke',
 
 // Risk routes
 require __DIR__.'/risk.php';
+
+use App\Http\Controllers\Audit\AuditController;
+use App\Http\Controllers\Audit\ControlController;
+use App\Http\Controllers\Audit\AuditFindingController;
+use App\Http\Controllers\Audit\CorrectiveActionController;
+
+Route::prefix('audit')->group(function(){
+    Route::resource('audits', AuditController::class);
+    Route::resource('controls', ControlController::class);
+    Route::resource('findings', AuditFindingController::class);
+    Route::resource('corrective_actions', CorrectiveActionController::class);
+});

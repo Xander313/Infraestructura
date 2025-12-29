@@ -95,7 +95,17 @@
             'items' => [
                 ['label' => 'Riesgos', 'href' => url('/risk/ui/risks'), 'key' => 'risks'],
                 ['label' => 'DPIA', 'href' => url('/risk/ui/dpias'), 'key' => 'dpia'],
-                ['label' => 'Auditorías', 'href' => '#', 'key' => 'audits'],
+                [
+                    'label' => 'Auditoría',
+                    'href' => "#",
+                    'key' => 'audits',
+                    'submenu' => [
+                        ['label' => 'Auditorias', 'href' => route('audits.index'), 'key' => 'audits'],
+                        ['label' => 'Controles', 'href' => route('controls.index'), 'key' => 'controls'],
+                        ['label' => 'Hallazgos', 'href' => route('findings.index'), 'key' => 'findings'],
+                        ['label' => 'Acciones Correctivas', 'href' => route('corrective_actions.index'), 'key' => 'corrective_actions'],
+                    ],
+                ],
             ],
         ],
         [
