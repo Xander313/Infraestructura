@@ -85,7 +85,7 @@
                 ['label' => 'Sistemas / Data Stores', 'href' => '#', 'key' => 'systems'],
                 ['label' => 'Destinatarios', 'href' => '#', 'key' => 'recipients'],
                 ['label' => 'RAT: Actividades de Tratamiento', 'href' => route('rat.index'), 'key' => 'rat'],
-                ['label' => 'Titulares / Consentimientos', 'href' => '#', 'key' => 'subjects'],
+                ['label' => 'Titulares / Consentimientos', 'href' => route('data-subjects.index'), 'key' => 'subjects'],
                 ['label' => 'Documentos', 'href' => '#', 'key' => 'documents'],
                 ['label' => 'DSAR', 'href' => '#', 'key' => 'dsar'],
             ],
