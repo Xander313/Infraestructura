@@ -20,12 +20,20 @@ Route::get('/api/dashboard/activity', [DashboardController::class, 'apiRecentAct
 Route::resource('rat', ProcessingActivityController::class);
 
 // Org Routes
+
+
+Route::post('/orgs/check-ruc', [OrgController::class, 'checkRuc'])
+    ->name('orgs.check-ruc');
 Route::get('/org/select/{org}', function ($orgId) {
     session(['org_id' => $orgId]);
     return redirect()->back()->with('success', 'Organización activada.');
 })->name('orgs.select');
 
 Route::resource('orgs', OrgController::class);
+
+
+
+
 
 // Data Subjects Routes (Fase 6) - Rutas completas
 Route::resource('data-subjects', DataSubjectController::class);

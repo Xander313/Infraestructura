@@ -122,6 +122,13 @@ class OrgController extends Controller
             ->route('orgs.index')
             ->with('success', "Organización '{$org->name}' activada correctamente.");
     }
+    public function checkRuc(Request $request)
+    {
+        $exists = \App\Models\Core\Org::where('ruc', $request->ruc)->exists();
+
+        return response()->json(!$exists);
+    }
+
 
     /**
      * Método privado para actualizar la sesión de organización activa

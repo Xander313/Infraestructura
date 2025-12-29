@@ -25,7 +25,10 @@
 
             {{-- Body --}}
             <div class="p-6">
-                <form method="POST" action="{{ route('orgs.store') }}" class="space-y-5">
+                <form id="frm_org"
+                      method="POST"
+                      action="{{ route('orgs.store') }}"
+                      class="space-y-5">
                     @csrf
 
                     {{-- Nombre --}}
@@ -36,7 +39,6 @@
                         <input
                             type="text"
                             name="name"
-                            required
                             placeholder="Nombre de la organización"
                             class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring focus:ring-blue-200 text-sm"
                         >
@@ -87,3 +89,71 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+{{-- jQuery --}}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+{{-- jQuery Validate --}}
+<script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+
+<script>
+    $(function () {
+
+        $("#frm_org").validate({
+            rules: {
+                name: {
+                    required: true,
+                    maxlength: 255
+                },
+                ruc: {
+                    required: true,
+                    digits: true,
+                    minlength: 13,
+                    maxlength: 13,
+                    remote: {
+                        url: "{{ route('orgs.check-ruc') }}",
+                        type: "post",
+                        data: {
+                            _token: "{{ csrf_token() }}",
+                            ruc: function () {
+                                return $("input[name='ruc']").val();
+                            }
+                        }
+                    }
+                },
+                industry: {
+                    required: true,
+                    maxlength: 100
+                }
+            },
+            messages: {
+                name: {
+                    required: "El nombre de la organización es obligatorio",
+                    maxlength: "El nombre no puede superar los 255 caracteres"
+                },
+                ruc: {
+                    required: "El RUC es obligatorio",
+                    digits: "El RUC debe contener solo números",
+                    minlength: "El RUC debe tener exactamente 13 dígitos",
+                    maxlength: "El RUC debe tener exactamente 13 dígitos",
+                    remote: "Este RUC ya está registrado"
+                },
+                industry: {
+                    required: "La industria es obligatoria",
+                    maxlength: "La industria no puede superar los 100 caracteres"
+                }
+            },
+            errorElement: "span",
+            errorClass: "text-red-500 text-sm",
+            highlight: function (element) {
+                $(element).addClass("border-red-500");
+            },
+            unhighlight: function (element) {
+                $(element).removeClass("border-red-500");
+            }
+        });
+
+    });
+</script>
+
+@endpush
