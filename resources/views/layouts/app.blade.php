@@ -260,19 +260,38 @@
 
                     <div class="space-y-1">
                         @foreach($section['items'] as $item)
-                            <a href="{{ $item['href'] }}"
-                               @click="if (isMobile()) sidebarOpen = false"
-                               class="flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-50 text-gray-700"
-                               :class="activeKey === '{{ $item['key'] }}' ? 'bg-blue-50 text-blue-700 border border-blue-100' : ''"
-                               @mouseenter="hoverKey='{{ $item['key'] }}'"
-                               @mouseleave="hoverKey=null"
-                               @focus="hoverKey='{{ $item['key'] }}'"
-                               @blur="hoverKey=null">
-                                <span class="truncate">{{ $item['label'] }}</span>
-                                <svg x-show="activeKey === '{{ $item['key'] }}'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                                </svg>
-                            </a>
+                            <div x-data="{ open: false }">
+                                {{-- Item principal --}}
+                                <a href="{{ $item['href'] }}"
+                                @click="if (isMobile()) sidebarOpen = false; open = !open"
+                                class="flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-50 text-gray-700"
+                                :class="activeKey === '{{ $item['key'] }}' ? 'bg-blue-50 text-blue-700 border border-blue-100' : ''">
+                                    <span class="truncate">{{ $item['label'] }}</span>
+
+                                    {{-- Icono de flecha solo si hay submenu --}}
+                                    @if(isset($item['submenu']))
+                                        <svg :class="{'rotate-90': open}" class="w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    @endif
+                                </a>
+
+                                {{-- Submenu --}}
+                                @if(isset($item['submenu']))
+                                    <ul x-show="open" x-collapse class="pl-4 mt-1 space-y-1">
+                                        @foreach($item['submenu'] as $sub)
+                                            <li>
+                                                <a href="{{ $sub['href'] }}"
+                                                @click="if (isMobile()) sidebarOpen = false"
+                                                class="block px-3 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                                                :class="activeKey === '{{ $sub['key'] }}' ? 'bg-blue-50 text-blue-700 border border-blue-100' : ''">
+                                                    {{ $sub['label'] }}
+                                                </a>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                            </div>
                         @endforeach
                     </div>
                 </div>
