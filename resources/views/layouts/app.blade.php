@@ -111,9 +111,10 @@
         [
             'label' => 'TRAINING',
             'items' => [
-                ['label' => 'Cursos', 'href' => '#', 'key' => 'courses'],
-                ['label' => 'Asignaciones', 'href' => '#', 'key' => 'assignments'],
-                ['label' => 'Resultados', 'href' => '#', 'key' => 'results'],
+                ['label' => 'Cursos', 'href' => '/training/courses', 'key' => 'courses'],
+                ['label' => 'Asignaciones', 'href' => '/training/assignments', 'key' => 'assignments'],
+                ['label' => 'Resultados',   'href' => '/training/results',    'key' => 'results'],
+
             ],
         ],
     ];
@@ -335,16 +336,7 @@
                     {{ session('error') }}
                 </div>
             @endif
-            @if ($errors->any())
-                <div class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-                    <div class="font-semibold mb-1">Hay errores en el formulario:</div>
-                    <ul class="list-disc pl-5 space-y-1">
-                        @foreach($errors->all() as $e)
-                            <li>{{ $e }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
+            
 
             {{-- Encabezado de página (opcional) --}}
             @hasSection('page_header')

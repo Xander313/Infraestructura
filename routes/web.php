@@ -65,3 +65,69 @@ Route::prefix('audit')->group(function(){
     Route::resource('findings', AuditFindingController::class);
     Route::resource('corrective_actions', CorrectiveActionController::class);
 });
+
+
+
+use App\Http\Controllers\Privacy\TrainingCourseController;
+
+
+Route::prefix('training')->name('training.')->group(function () {
+    Route::resource('courses', TrainingCourseController::class);
+});
+
+
+Route::prefix('training')->name('training.')->group(function () {
+
+    Route::get('courses', [TrainingCourseController::class, 'index'])
+        ->name('courses.index');
+
+    Route::get('courses/create', [TrainingCourseController::class, 'create'])
+        ->name('courses.create');
+
+    Route::post('courses', [TrainingCourseController::class, 'store'])
+        ->name('courses.store');
+
+});
+
+use App\Http\Controllers\Privacy\TrainingAssignmentController;
+
+Route::prefix('training')
+    ->name('training.')
+    ->group(function () {
+
+        Route::resource(
+            'assignments',
+            TrainingAssignmentController::class
+        );
+
+    });
+
+
+
+    use App\Http\Controllers\Privacy\TrainingResultController;
+
+Route::prefix('training')
+    ->name('training.')
+    ->group(function () {
+
+        Route::get(
+            'results',
+            [TrainingResultController::class, 'index']
+        )->name('results.index');
+
+        Route::get(
+            'results/{result}',
+            [TrainingResultController::class, 'show']
+        )->name('results.show');
+
+        Route::get(
+            'results/{result}/edit',
+            [TrainingResultController::class, 'edit']
+        )->name('results.edit');
+
+        Route::put(
+            'results/{result}',
+            [TrainingResultController::class, 'update']
+        )->name('results.update');
+
+    });
